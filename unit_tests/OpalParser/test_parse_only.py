@@ -7,6 +7,10 @@ import tempfile
 import unittest
 
 EXECUTABLE = str(Path(sys.argv.pop(1)).resolve())
+LAUNCHER = []
+if len(sys.argv) > 1 and sys.argv[1] == '--launcher':
+    LAUNCHER = sys.argv[2:]
+    del sys.argv[1:]
 
 
 class ParseOnlyTest(unittest.TestCase):
@@ -24,7 +28,8 @@ class ParseOnlyTest(unittest.TestCase):
             before = {str(p.relative_to(work)): p.read_bytes()
                       for p in work.rglob('*') if p.is_file()}
             result = subprocess.run(
-                [EXECUTABLE, *(arguments or ['--parse-only', '--input', 'input.in'])],
+                [*LAUNCHER, EXECUTABLE,
+                 *(arguments or ['--parse-only', '--input', 'input.in'])],
                 cwd=work, env={**os.environ, 'HOME': str(home)},
                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=30)
             output = result.stdout
