@@ -20,6 +20,8 @@
 //
 #include "Structure/FieldSolverCmd.h"
 
+#include <cmath>
+
 #include <map>
 
 #include "AbstractObjects/Element.h"
@@ -86,6 +88,24 @@ FieldSolverCmd::FieldSolverCmd()
             "P3M cutoff in units of the largest mesh spacing, updated with the mesh (ALPHA = "
             "2/cutoff); used unless RCUT is given.",
             2.0);
+
+    itsAttr[FIELDSOLVER::REPEATS] = Attributes::makeReal(
+            "REPEATS",
+            "Copies of the bunch field on each side along the beam axis, as for a train of "
+            "identical bunches spaced by REPEAT_SPACING; TYPE=OPEN or P3M with open boundaries.",
+            0.0);
+
+    itsAttr[FIELDSOLVER::REPEATSPACING] = Attributes::makeReal(
+            "REPEAT_SPACING",
+            "Lab-frame spacing of the REPEATS copies in m (beta*c/f for bunches "
+            "in neighbouring RF buckets).",
+            0.0);
+
+    itsAttr[FIELDSOLVER::PERIODICBOX] = Attributes::makeReal(
+            "PERIODICBOX",
+            "Edge length in m of a fixed all-periodic cube centered on the solve-frame origin; "
+            "zero derives the box from the particle extents at every solve.",
+            0.0);
 
     itsAttr[FIELDSOLVER::BBOXINCR] =
             Attributes::makeReal("BBOXINCR", "Increase of bounding box in % ", 2.0);
@@ -157,10 +177,27 @@ double FieldSolverCmd::getP3MCutoffCells() const {
     return Attributes::getReal(itsAttr[FIELDSOLVER::P3MRCUTCELLS]);
 }
 
+double FieldSolverCmd::getPeriodicBox() const {
+    return Attributes::getReal(itsAttr[FIELDSOLVER::PERIODICBOX]);
+}
+
 bool FieldSolverCmd::hasP3MCutoff() const { return !itsAttr[FIELDSOLVER::P3MRCUT].defaultUsed(); }
 
 bool FieldSolverCmd::hasP3MCutoffCells() const {
     return !itsAttr[FIELDSOLVER::P3MRCUTCELLS].defaultUsed();
+}
+
+int FieldSolverCmd::getRepeatCount() const {
+    const double repeats = Attributes::getReal(itsAttr[FIELDSOLVER::REPEATS]);
+    if (repeats < 0.0 || repeats != std::floor(repeats)) {
+        throw OpalException(
+                "FieldSolverCmd::getRepeatCount", "REPEATS must be a non-negative integer.");
+    }
+    return static_cast<int>(repeats);
+}
+
+double FieldSolverCmd::getRepeatSpacing() const {
+    return Attributes::getReal(itsAttr[FIELDSOLVER::REPEATSPACING]);
 }
 
 BCHandler<3> FieldSolverCmd::constructBCHandler() const {
@@ -296,6 +333,11 @@ Inform& FieldSolverCmd::printInfo(Inform& os) const {
             os << "* RCUT_CELLS   " << getP3MCutoffCells() << " [largest mesh spacing]" << '\n'
                << "* ALPHA        2/RCUT, updated with the mesh" << endl;
         }
+    }
+
+    if (getRepeatCount() > 0) {
+        os << "* REPEATS      " << getRepeatCount() << " on each side, spacing "
+           << getRepeatSpacing() << " [m]" << endl;
     }
 
     if (Attributes::getBool(itsAttr[FIELDSOLVER::PARFFTX])) {
