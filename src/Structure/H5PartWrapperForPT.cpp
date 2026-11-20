@@ -326,7 +326,7 @@ void H5PartWrapperForPT::writeStepHeader(
     double t                     = bunch->getT();
     Vector_t<double, 3> rmin     = bunch->get_origin();
     Vector_t<double, 3> rmax     = bunch->get_maxExtent();
-    Vector_t<double, 3> centroid = pc->getCentroid();
+    Vector_t<double, 3> centroid = pc->getMeanR();
 
     Vector_t<double, 3> maxP(0.0);
     Vector_t<double, 3> minP(0.0);
