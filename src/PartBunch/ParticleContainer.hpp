@@ -406,6 +406,14 @@ public:
     void markMomentsDirty() { containerState_m->markMomentsDirty(); }
     void markMomentsClean() { containerState_m->markMomentsClean(); }
 
+    /// FFT2D5-only reduction policy; other solver selections restore the default dense path.
+    void setCompactSymmetricMoments(bool enabled) {
+        distMoments_m.setCompactSymmetricReduction(enabled);
+    }
+    bool usesCompactSymmetricMoments() const {
+        return distMoments_m.usesCompactSymmetricReduction();
+    }
+
     void updateMoments() {
         /*
         Quick check that this container was registered with a BunchStateHandler. If not, throw an
@@ -438,6 +446,10 @@ public:
     Vector_t<double, 3> getMeanP() const { return distMoments_m.getMeanMomentum(); }
 
     Vector_t<double, 3> getRmsP() const { return distMoments_m.getStandardDeviationMomentum(); }
+
+    Vector_t<double, 3> getRestFrameTemperature() const {
+        return distMoments_m.getRestFrameTemperature();
+    }
 
     Vector_t<double, 3> getMeanR() const { return distMoments_m.getMeanPosition(); }
 
